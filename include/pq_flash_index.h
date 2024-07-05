@@ -24,7 +24,7 @@ namespace diskann
 template <typename T, typename LabelT = uint32_t> class PQFlashIndex
 {
   public:
-    DISKANN_DLLEXPORT PQFlashIndex(std::shared_ptr<AlignedFileReader> &fileReader,
+    DISKANN_DLLEXPORT PQFlashIndex(std::shared_ptr<AlignedFileReader> fileReader,
                                    diskann::Metric metric = diskann::Metric::L2);
     DISKANN_DLLEXPORT ~PQFlashIndex();
 
@@ -90,7 +90,7 @@ template <typename T, typename LabelT = uint32_t> class PQFlashIndex
 
     DISKANN_DLLEXPORT uint64_t get_data_dim();
 
-    std::shared_ptr<AlignedFileReader> &reader;
+    std::shared_ptr<AlignedFileReader> reader;
 
     DISKANN_DLLEXPORT diskann::Metric get_metric();
 

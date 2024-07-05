@@ -4,6 +4,7 @@
 #pragma once
 #include <string>
 #include <stdexcept>
+#include <cstdint>
 #include <system_error>
 #include "windows_customizations.h"
 
