@@ -29,7 +29,7 @@ namespace diskann
 {
 
 template <typename T, typename LabelT>
-PQFlashIndex<T, LabelT>::PQFlashIndex(std::shared_ptr<AlignedFileReader> &fileReader, diskann::Metric m)
+PQFlashIndex<T, LabelT>::PQFlashIndex(std::shared_ptr<AlignedFileReader> fileReader, diskann::Metric m)
     : reader(fileReader), metric(m), _thread_data(nullptr)
 {
     diskann::Metric metric_to_invoke = m;
@@ -1678,7 +1678,7 @@ void PQFlashIndex<T, LabelT>::cached_beam_search(const T *query1, const uint64_t
     }
 
     // copy k_search values
-    for (uint64_t i = 0; i < k_search; i++)
+    for (uint64_t i = 0; i < k_search && i < full_retset.size(); i++)
     {
         indices[i] = full_retset[i].id;
         auto key = (uint32_t)indices[i];
