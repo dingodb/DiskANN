@@ -1303,6 +1303,10 @@ template <typename T, typename TagT, typename LabelT> void Index<T, TagT, LabelT
     {
         auto node = visit_order[node_ctr];
 
+        // bugfix: if the node is equal to the start, skip it. handled it later.
+        if (node == _start)
+            continue;
+
         // Find and add appropriate graph edges
         ScratchStoreManager<InMemQueryScratch<T>> manager(_query_scratch);
         auto scratch = manager.scratch_space();
@@ -1331,6 +1335,35 @@ template <typename T, typename TagT, typename LabelT> void Index<T, TagT, LabelT
             diskann::cout << "\r" << (100.0 * node_ctr) / (visit_order.size()) << "% of index build completed."
                           << std::flush;
         }
+    }
+
+    // handle the case where the start node is skipped
+    if (int64_t node_ctr = _start; node_ctr < (int64_t)(visit_order.size()))
+    {
+        auto node = visit_order[node_ctr];
+
+        // Find and add appropriate graph edges
+        ScratchStoreManager<InMemQueryScratch<T>> manager(_query_scratch);
+        auto scratch = manager.scratch_space();
+        std::vector<uint32_t> pruned_list;
+        if (_filtered_index)
+        {
+            search_for_point_and_prune(node, _indexingQueueSize, pruned_list, scratch, true, _filterIndexingQueueSize);
+        }
+        else
+        {
+            search_for_point_and_prune(node, _indexingQueueSize, pruned_list, scratch);
+        }
+        assert(pruned_list.size() > 0);
+
+        {
+            LockGuard guard(_locks[node]);
+
+            _graph_store->set_neighbours(node, pruned_list);
+            assert(_graph_store->get_neighbours((location_t)node).size() <= _indexingRange);
+        }
+
+        inter_insert(node, pruned_list, scratch);
     }
 
     if (_nd > 0)
