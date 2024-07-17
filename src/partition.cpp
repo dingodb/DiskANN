@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include <cmath>
+#include <cstddef>
 #include <cstdio>
 #include <iostream>
 #include <sstream>
@@ -572,6 +573,11 @@ int partition_with_ram_budget(const std::string data_file, const double sampling
 
         for (auto &p : cluster_sizes)
         {
+            if (0 == p)
+            {
+                num_parts--;
+                continue;
+            }
             // to account for the fact that p is the size of the shard over the
             // testing sample.
             p = (uint64_t)(p / sampling_rate);
