@@ -1,6 +1,8 @@
 // TODO
 // CHECK COSINE ON LINUX
 
+#include "diskann_hook.h"
+#include <type_traits>
 #ifdef _WINDOWS
 #include <immintrin.h>
 #include <smmintrin.h>
@@ -173,13 +175,24 @@ float DistanceL2UInt8::compare(const uint8_t *a, const uint8_t *b, uint32_t size
     return (float)result;
 }
 
-#ifndef _WINDOWS
 float DistanceL2Float::compare(const float *a, const float *b, uint32_t size) const
+{
+    FVEC_L2SQR_HOOK hook = get_fvec_L2sqr_hook();
+    if (hook)
+    {
+        return hook(a, b, static_cast<size_t>(size));
+    }
+
+    return compare_default(a, b, size);
+}
+
+#ifndef _WINDOWS
+float DistanceL2Float::compare_default(const float *a, const float *b, uint32_t size) const
 {
     a = (const float *)__builtin_assume_aligned(a, 32);
     b = (const float *)__builtin_assume_aligned(b, 32);
 #else
-float DistanceL2Float::compare(const float *a, const float *b, uint32_t size) const
+float DistanceL2Float::compare_default(const float *a, const float *b, uint32_t size) const
 {
 #endif
 
@@ -222,12 +235,40 @@ float DistanceL2Float::compare(const float *a, const float *b, uint32_t size) co
 
 template <typename T> float SlowDistanceL2<T>::compare(const T *a, const T *b, uint32_t length) const
 {
+    if constexpr (std::is_same_v<T, float>)
+    {
+        FVEC_L2SQR_HOOK hook = get_fvec_L2sqr_hook();
+        if (hook)
+        {
+            return hook(a, b, static_cast<size_t>(length));
+        }
+        return compare_default(a, b, length);
+    }
+    else
+    {
+        return compare_default(a, b, length);
+    }
+}
+
+template <typename T> float SlowDistanceL2<T>::compare_default(const T *a, const T *b, uint32_t length) const
+{
     float result = 0.0f;
     for (uint32_t i = 0; i < length; i++)
     {
         result += ((float)(a[i] - b[i])) * (a[i] - b[i]);
     }
     return result;
+}
+
+float AVXDistanceL2Float::compare(const float *a, const float *b, uint32_t length) const
+{
+    FVEC_L2SQR_HOOK hook = get_fvec_L2sqr_hook();
+    if (hook)
+    {
+        return hook(a, b, static_cast<size_t>(length));
+    }
+
+    return compare_default(a, b, length);
 }
 
 #ifdef _WINDOWS
@@ -269,7 +310,7 @@ float AVXDistanceL2Int8::compare(const int8_t *a, const int8_t *b, uint32_t leng
     return res;
 }
 
-float AVXDistanceL2Float::compare(const float *a, const float *b, uint32_t length) const
+float AVXDistanceL2Float::compare_default(const float *a, const float *b, uint32_t length) const
 {
     __m128 diff, v1, v2;
     __m128 sum = _mm_set1_ps(0);
@@ -292,7 +333,8 @@ float AVXDistanceL2Int8::compare(const int8_t *, const int8_t *, uint32_t) const
 {
     return 0;
 }
-float AVXDistanceL2Float::compare(const float *, const float *, uint32_t) const
+
+float AVXDistanceL2Float::compare_default(const float *, const float *, uint32_t) const
 {
     return 0;
 }
