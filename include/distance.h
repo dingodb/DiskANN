@@ -120,6 +120,14 @@ class DistanceL2Float : public Distance<float>
 #else
     DISKANN_DLLEXPORT virtual float compare(const float *a, const float *b, uint32_t size) const __attribute__((hot));
 #endif
+
+  private:
+#ifdef _WINDOWS
+    DISKANN_DLLEXPORT virtual float compare_default(const float *a, const float *b, uint32_t size) const;
+#else
+    DISKANN_DLLEXPORT virtual float compare_default(const float *a, const float *b, uint32_t size) const
+        __attribute__((hot));
+#endif
 };
 
 class AVXDistanceL2Float : public Distance<float>
@@ -129,6 +137,9 @@ class AVXDistanceL2Float : public Distance<float>
     {
     }
     DISKANN_DLLEXPORT virtual float compare(const float *a, const float *b, uint32_t length) const;
+
+  private:
+    DISKANN_DLLEXPORT virtual float compare_default(const float *a, const float *b, uint32_t length) const;
 };
 
 template <typename T> class SlowDistanceL2 : public Distance<T>
@@ -138,6 +149,9 @@ template <typename T> class SlowDistanceL2 : public Distance<T>
     {
     }
     DISKANN_DLLEXPORT virtual float compare(const T *a, const T *b, uint32_t length) const;
+
+  private:
+    DISKANN_DLLEXPORT virtual float compare_default(const T *a, const T *b, uint32_t length) const;
 };
 
 class SlowDistanceCosineUInt8 : public Distance<uint8_t>
