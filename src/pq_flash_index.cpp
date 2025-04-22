@@ -1693,11 +1693,15 @@ void PQFlashIndex<T, LabelT>::cached_beam_search(const T *query1, const uint64_t
             if (metric == diskann::Metric::INNER_PRODUCT)
             {
                 // flip the sign to convert min to max
-                distances[i] = (-distances[i]);
+                distances[i] = 1.0 - distances[i] / 2.0;
                 // rescale to revert back to original norms (cancelling the
                 // effect of base and query pre-processing)
                 if (_max_base_norm != 0)
                     distances[i] *= (_max_base_norm * query_norm);
+            }
+            else if (metric == diskann::Metric::COSINE)
+            {
+                distances[i] = 1.0 - distances[i] / 2.0;
             }
         }
     }
